@@ -12,6 +12,8 @@ parameters:
     - routes
     - database
     - tests
+  ignoreErrors:
+    - message: "#Called 'env' outside of the config directory which returns null when the config is cached, use 'config' for config/\\*#"
 
 rules:
   # enforce that every function has a return type
