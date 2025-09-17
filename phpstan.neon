@@ -1,0 +1,19 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+  parallel:
+    maximumNumberOfProcesses: 1
+  level: 5
+  paths:
+    - app
+    - bootstrap
+    - routes
+    - database
+    - tests
+
+rules:
+  # enforce that every function has a return type
+  - PHPStan\Rules\Methods\MissingMethodReturnTypehintRule
+
