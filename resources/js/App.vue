@@ -11,43 +11,78 @@
         v-model="linkInput"
         class="link-input"
       />
-      <button @click="processLink" class="action-btn" :disabled="isGenerating">
+      <button @click="processStep1" class="action-btn" :disabled="isGenerating">
         {{ isGenerating ? 'Generating...' : 'Generate' }}
       </button>
     </div>
     <div class="preview">
-      Preview
+      <div v-if="errorMessage" class="error">
+        {{ errorMessage }}
+      </div>
+      <div v-else-if="previewData" class="json-output">
+        <VueJsonPretty :data="previewData" />
+        <div class="loading-time">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12,6 12,12 16,14"/>
+          </svg>
+          Loaded in {{ loadingTime }}ms
+        </div>
+      </div>
+      <div v-else class="placeholder">
+        Preview
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import axios from 'axios'
+import VueJsonPretty from 'vue-json-pretty'
+import 'vue-json-pretty/lib/styles.css'
 
 const linkInput = ref('https://www.brompton.com/p/817/c-line-explore-23')
 const isGenerating = ref(false)
+const previewData = ref(null)
+const errorMessage = ref('')
+const loadingTime = ref(0)
 
-const processLink = () => {
+const processStep1 = async () => {
   if (linkInput.value && !isGenerating.value) {
     isGenerating.value = true
-    console.log('Processing:', linkInput.value)
+    errorMessage.value = ''
+    previewData.value = null
+    loadingTime.value = 0
 
-    // Simulate processing time
-    setTimeout(() => {
+    const startTime = performance.now()
+
+    try {
+      const response = await axios.post('/api/step1', {
+        url: linkInput.value
+      })
+
+      const endTime = performance.now()
+      loadingTime.value = Math.round(endTime - startTime)
+      previewData.value = response.data
+    } catch (error) {
+      errorMessage.value = error.response?.data?.message || 'An error occurred'
+      console.error('Error:', error)
+    } finally {
       isGenerating.value = false
-    }, 3000)
+    }
   }
 }
 </script>
 
-<style scoped>
-:global(*) {
+<style>
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-:global(body), :global(html) {
+body, html {
   margin: 0;
   padding: 0;
   background: #0d1117;
@@ -153,6 +188,52 @@ h1::before {
   border: 1px solid #30363d;
   border-radius: 3px;
   font-family: inherit;
+  min-height: 200px;
+}
+
+.placeholder {
   color: #6e7681;
+}
+
+.error {
+  color: #f85149;
+}
+
+.json-output {
+  color: #c9d1d9;
+}
+
+.json-output .vjs-tree {
+  background: transparent !important;
+  color: #c9d1d9 !important;
+  font-family: 'Courier New', Monaco, Consolas, monospace !important;
+}
+
+.json-output .vjs-key {
+  color: #58a6ff !important;
+}
+
+.json-output .vjs-value-string {
+  color: #7ee787 !important;
+}
+
+.json-output .vjs-value-number {
+  color: #ffa657 !important;
+}
+
+.loading-time {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #30363d;
+  color: #6e7681;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+}
+
+.loading-time svg {
+  opacity: 0.7;
 }
 </style>
