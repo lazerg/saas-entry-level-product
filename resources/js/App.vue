@@ -19,12 +19,30 @@
       <div v-if="errorMessage" class="error">
         {{ errorMessage }}
       </div>
+      <div v-else-if="isGenerating" class="loading-info">
+        <div class="request-info">
+          <div class="endpoint">POST /api/step1</div>
+          <div class="payload">
+            <div class="payload-label">Request payload:</div>
+            <div class="payload-data">
+              <VueJsonPretty :data="{ url: linkInput }" />
+            </div>
+          </div>
+          <div class="timer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12,6 12,12 16,14"></polyline>
+            </svg>
+            {{ elapsedTime }}s elapsed...
+          </div>
+        </div>
+      </div>
       <div v-else-if="previewData" class="json-output">
         <VueJsonPretty :data="previewData" />
         <div class="loading-time">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12,6 12,12 16,14"/>
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12,6 12,12 16,14"></polyline>
           </svg>
           Loaded in {{ loadingTime }}ms
         </div>
@@ -47,6 +65,7 @@ const isGenerating = ref(false)
 const previewData = ref(null)
 const errorMessage = ref('')
 const loadingTime = ref(0)
+const elapsedTime = ref(0)
 
 const processStep1 = async () => {
   if (linkInput.value && !isGenerating.value) {
@@ -54,8 +73,15 @@ const processStep1 = async () => {
     errorMessage.value = ''
     previewData.value = null
     loadingTime.value = 0
+    elapsedTime.value = 0
 
     const startTime = performance.now()
+
+    // Timer to update elapsed time every 100ms
+    const timer = setInterval(() => {
+      const currentTime = performance.now()
+      elapsedTime.value = parseFloat(((currentTime - startTime) / 1000).toFixed(1))
+    }, 100)
 
     try {
       const response = await axios.post('/api/step1', {
@@ -69,6 +95,7 @@ const processStep1 = async () => {
       errorMessage.value = error.response?.data?.message || 'An error occurred'
       console.error('Error:', error)
     } finally {
+      clearInterval(timer)
       isGenerating.value = false
     }
   }
@@ -221,6 +248,7 @@ h1::before {
   color: #ffa657 !important;
 }
 
+
 .loading-time {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
@@ -235,5 +263,72 @@ h1::before {
 
 .loading-time svg {
   opacity: 0.7;
+}
+
+.loading-info {
+  color: #c9d1d9;
+}
+
+.request-info {
+  font-family: 'Courier New', Monaco, Consolas, monospace;
+}
+
+.endpoint {
+  color: #58a6ff;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.payload {
+  margin-bottom: 1rem;
+}
+
+.payload-label {
+  color: #f0883e;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.payload-data {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  padding: 0.75rem;
+  border-radius: 3px;
+  color: #7ee787;
+  white-space: pre;
+  font-size: 0.85rem;
+}
+
+.payload-data .vjs-tree {
+  background: transparent !important;
+  color: #c9d1d9 !important;
+  font-family: 'Courier New', Monaco, Consolas, monospace !important;
+  font-size: 0.85rem !important;
+}
+
+.payload-data .vjs-key {
+  color: #58a6ff !important;
+}
+
+.payload-data .vjs-value-string {
+  color: #7ee787 !important;
+}
+
+.timer {
+  color: #6e7681;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timer svg {
+  opacity: 0.7;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>
