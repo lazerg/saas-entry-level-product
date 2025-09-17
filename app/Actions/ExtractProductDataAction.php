@@ -39,7 +39,7 @@ class ExtractProductDataAction
             'prompt' => [
                 'id' => $promptId,
             ],
-            'input'  => [
+            'input' => [
                 [
                     'role'    => 'user',
                     'content' => $content,
@@ -48,9 +48,6 @@ class ExtractProductDataAction
         ])->outputText;
     }
 
-    /**
-     * @return \App\Http\Requests\Step1Response
-     */
     private function cacheResponse(): Step1Response
     {
         return Step1Response::from([
